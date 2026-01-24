@@ -1,0 +1,195 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - "*"
+
+pool:
+  name: Default
+
+variables:
+  subscriptionId: 'c25bc3f7-9afc-4162-963d-0a5d0eed078c'
+  location: 'northeurope'
+
+  # IMPORTANT: nom EXACT de ta Service Connection (Project settings > Service connections)
+  serviceConnection: 'avd'
+
+  rgNameDev: 'a2i-avd-lab-rg'
+
+  # (optionnel) ObjectId d’un groupe Entra à qui donner l’accès AVD + login VM
+  avdUsersGroupObjectIdDev: '00000000-0000-0000-0000-000000000000'
+
+stages:
+  # ==========================
+  # CI - Validate (build + what-if)
+  # ==========================
+  - stage: Validate
+    displayName: "CI - Validate Bicep"
+    jobs:
+      - job: Validate
+        displayName: "Validate"
+        steps:
+          - checkout: self
+
+          - task: AzureCLI@2
+            displayName: "Bicep build + what-if (Windows-safe)"
+            inputs:
+              azureSubscription: $(serviceConnection)
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                $ErrorActionPreference = "Stop"
+                try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch {}
+
+                az account set --subscription "$(subscriptionId)"
+
+                # Compile Bicep (fail fast)
+                az bicep build --file infra/main.bicep | Out-Null
+
+                # Ensure RG exists for what-if
+                az group create -n "$(rgNameDev)" -l "$(location)" | Out-Null
+
+                $loc = "$(location)"
+
+                # Get ONLY version names (avoid multi-column TSV)
+                $aadFull = (az vm extension image list-versions -l $loc -p Microsoft.Azure.ActiveDirectory -n AADLoginForWindows --query "[].name" -o tsv |
+                  ForEach-Object { [version]$_ } | Sort-Object | Select-Object -Last 1).ToString()
+                $aadMm = ($aadFull -split '\.')[0..1] -join '.'
+
+                $dscFull = (az vm extension image list-versions -l $loc -p Microsoft.Powershell -n DSC --query "[].name" -o tsv |
+                  ForEach-Object { [version]$_ } | Sort-Object | Select-Object -Last 1).ToString()
+                $dscMm = ($dscFull -split '\.')[0..1] -join '.'
+
+                # Pick a reachable modulesUrl (lab). For PROD: mirror to your own storage.
+                $candidates = @(
+                  "https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_1.0.02893.601.zip",
+                  "https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_1.0.02714.342.zip",
+                  "https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_1.0.02627.270.zip"
+                )
+                $modulesUrl = $null
+                foreach ($u in $candidates) {
+                  try {
+                    $r = Invoke-WebRequest -Uri $u -Method Head -UseBasicParsing -TimeoutSec 20
+                    if ($r.StatusCode -ge 200 -and $r.StatusCode -lt 400) { $modulesUrl = $u; break }
+                  } catch {}
+                }
+                if (-not $modulesUrl) { throw "No reachable Configuration_*.zip found (galleryartifacts)." }
+
+                Write-Host "Resolved AADLoginForWindows: $aadFull -> $aadMm"
+                Write-Host "Resolved DSC:              $dscFull -> $dscMm"
+                Write-Host "Resolved modulesUrl:       $modulesUrl"
+
+                # what-if (dummy password ok)
+                az deployment group what-if `
+                  -g "$(rgNameDev)" `
+                  -n "ci-whatif-$(Build.BuildId)" `
+                  -f infra/main.bicep `
+                  -p infra/parameters/dev.json `
+                  -p adminPassword='DummyPassword!1234' `
+                  -p aadLoginTypeHandlerVersion="$aadMm" `
+                  -p dscTypeHandlerVersion="$dscMm" `
+                  -p dscModulesUrl="$modulesUrl" `
+                  --mode Incremental
+
+  # ==========================
+  # CD - Deploy DEV (requires runtime secret variable)
+  # ==========================
+  - stage: Deploy_Dev
+    displayName: "CD - Deploy DEV"
+    dependsOn: Validate
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: DeployDev
+        displayName: "Deploy DEV"
+        steps:
+          - checkout: self
+
+          - task: AzureCLI@2
+            displayName: "Deploy DEV (password provided at run time)"
+            inputs:
+              azureSubscription: $(serviceConnection)
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                $ErrorActionPreference = "Stop"
+                try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch {}
+
+                if ([string]::IsNullOrWhiteSpace($env:AVDLOCALADMINPASSWORD)) {
+                  throw "Missing secret variable 'avdLocalAdminPassword'. Run pipeline > Variables > add avdLocalAdminPassword (Keep secret)."
+                }
+
+                az account set --subscription "$(subscriptionId)"
+
+                $loc = "$(location)"
+                $rg  = "$(rgNameDev)"
+                az group create -n $rg -l $loc | Out-Null
+
+                $aadFull = (az vm extension image list-versions -l $loc -p Microsoft.Azure.ActiveDirectory -n AADLoginForWindows --query "[].name" -o tsv |
+                  ForEach-Object { [version]$_ } | Sort-Object | Select-Object -Last 1).ToString()
+                $aadMm = ($aadFull -split '\.')[0..1] -join '.'
+
+                $dscFull = (az vm extension image list-versions -l $loc -p Microsoft.Powershell -n DSC --query "[].name" -o tsv |
+                  ForEach-Object { [version]$_ } | Sort-Object | Select-Object -Last 1).ToString()
+                $dscMm = ($dscFull -split '\.')[0..1] -join '.'
+
+                $candidates = @(
+                  "https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_1.0.02893.601.zip",
+                  "https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_1.0.02714.342.zip",
+                  "https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_1.0.02627.270.zip"
+                )
+                $modulesUrl = $null
+                foreach ($u in $candidates) {
+                  try {
+                    $r = Invoke-WebRequest -Uri $u -Method Head -UseBasicParsing -TimeoutSec 20
+                    if ($r.StatusCode -ge 200 -and $r.StatusCode -lt 400) { $modulesUrl = $u; break }
+                  } catch {}
+                }
+                if (-not $modulesUrl) { throw "No reachable Configuration_*.zip found (galleryartifacts)." }
+
+                # Deploy + capture outputs
+                $outputsJson = az deployment group create `
+                  -g $rg `
+                  -n "dev-$(Build.BuildId)" `
+                  -f infra/main.bicep `
+                  -p infra/parameters/dev.json `
+                  -p adminPassword="$env:AVDLOCALADMINPASSWORD" `
+                  -p aadLoginTypeHandlerVersion="$aadMm" `
+                  -p dscTypeHandlerVersion="$dscMm" `
+                  -p dscModulesUrl="$modulesUrl" `
+                  --mode Incremental `
+                  --query "properties.outputs" -o json
+
+                $outputs = $outputsJson | ConvertFrom-Json
+                $appGroupId = $outputs.appGroupId.value
+                if (-not $appGroupId) { throw "Deployment output appGroupId is empty." }
+
+                Write-Host "AppGroupId=$appGroupId"
+
+                # Optional RBAC (skip if not set)
+                $principal = "$(avdUsersGroupObjectIdDev)"
+                if ($principal -eq "00000000-0000-0000-0000-000000000000") {
+                  Write-Host "RBAC skipped (avdUsersGroupObjectIdDev not set)."
+                  exit 0
+                }
+
+                $sub = "$(subscriptionId)"
+                $rgScope = "/subscriptions/$sub/resourceGroups/$rg"
+
+                function Ensure-Role($roleName, $scope) {
+                  $exists = az role assignment list --assignee-object-id $principal --scope $scope --query "[?roleDefinitionName=='$roleName'] | length(@)" -o tsv
+                  if ($exists -and [int]$exists -gt 0) {
+                    Write-Host "OK: $roleName already assigned on $scope"
+                    return
+                  }
+                  az role assignment create --assignee-object-id $principal --assignee-principal-type Group --role $roleName --scope $scope | Out-Null
+                  Write-Host "Assigned: $roleName on $scope"
+                }
+
+                Ensure-Role "Desktop Virtualization User" $appGroupId
+                Ensure-Role "Virtual Machine User Login"  $rgScope
+            env:
+              AVDLOCALADMINPASSWORD: $(avdLocalAdminPassword)
