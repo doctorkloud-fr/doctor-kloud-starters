@@ -1,4 +1,4 @@
-# Azure Doctor Starters
+#Doctor Kloud Starters
 
 Starters opinionated pour démarrer vite et démarrer proprement. Un starter n’est pas une démo. C’est une base de départ structurée, avec des choix assumés et des points d’extension explicites.
 
@@ -54,6 +54,4 @@ Breaking changes annoncés dans les release notes.
 
 Voir `LICENSE` dans ce repo.
 
-## Hub
 
-Le hub de l’Organization est ici : `azure-doctor/azure-doctor`.
