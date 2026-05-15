@@ -6,7 +6,7 @@
 
 ---
 <p align="center">
-  <img src="./assets/cover.png" width="600" alt="Doctor Kloud — Azure Application Gateway"/>
+  <img src="./.assets/cover.png" width="600" alt="Doctor Kloud — Azure Application Gateway"/>
 </p>
 
 # Doctor Kloud — Starter Kits
