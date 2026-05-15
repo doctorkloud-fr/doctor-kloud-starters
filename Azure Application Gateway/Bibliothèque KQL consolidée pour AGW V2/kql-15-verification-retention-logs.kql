@@ -1,0 +1,20 @@
+// Vérification que chaque AGW envoie bien des logs sur les 7 
+// derniers jours. AGW absente de cette liste = Diagnostic Settings 
+// probablement non configuré (P13).
+AzureDiagnostics
+| where ResourceProvider == "MICROSOFT.NETWORK"
+| where ResourceType == "APPLICATIONGATEWAYS"
+| where TimeGenerated > ago(7d)
+| summarize 
+    nb_access_logs = countif(Category == "ApplicationGatewayAccessLog"),
+    nb_firewall_logs = countif(Category == "ApplicationGatewayFirewallLog"),
+    nb_perf_logs = countif(Category == "ApplicationGatewayPerformanceLog"),
+    derniere_entree = max(TimeGenerated)
+  by Resource
+| extend statut = case(
+    nb_access_logs == 0, "CRITIQUE — AccessLog absent",
+    nb_firewall_logs == 0, "ATTENTION — FirewallLog absent (WAF activé ?)",
+    derniere_entree < ago(1h), "ATTENTION — pas de logs depuis 1h",
+    "OK")
+| order by statut asc
+
