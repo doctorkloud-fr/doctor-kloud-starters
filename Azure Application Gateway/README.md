@@ -5,7 +5,11 @@
 > **90+ bugs de spec corrigés** et documentés.
 
 ---
+<p align="center">
+  <img src="./assets/agw-banner.png" width="600" alt="Doctor Kloud — Azure Application Gateway"/>
+</p>
 
+# Doctor Kloud — Starter Kits
 ## 📦 Contenu
 
 | Dossier | Description | Fichiers |
