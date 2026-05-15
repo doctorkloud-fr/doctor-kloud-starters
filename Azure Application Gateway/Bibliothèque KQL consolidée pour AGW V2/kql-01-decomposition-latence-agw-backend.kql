@@ -1,0 +1,18 @@
+// Décomposition de la latence totale en deux composantes :
+// (1) latence interne AGW = timeTaken - BackendResponseTime
+// (2) latence Backend = BackendResponseTime
+// Permet de localiser instantanément la source d'une lenteur.
+AzureDiagnostics
+| where ResourceProvider == "MICROSOFT.NETWORK"
+| where Category == "ApplicationGatewayAccessLog"
+| where TimeGenerated > ago(24h)
+| extend 
+   latence_totale_ms = timeTaken_d,
+   latence_waf_ms = todouble(WAFEvaluationTime_s)
+| summarize 
+    P50_Total = percentile(latence_totale_ms, 50),
+    P95_Total = percentile(latence_totale_ms, 95),
+    P50_WAF = percentile(latence_waf_ms, 50),
+    P95_WAF = percentile(latence_waf_ms, 95)
+  by bin(TimeGenerated, 1h)
+| render timechart
