@@ -1,0 +1,14 @@
+// Évolution P50/P95/Max des Capacity Units consommées par AGW
+// sur 7 jours. Indicateur central pour le tuning autoscale et 
+// l'optimisation FinOps.
+AzureMetrics
+| where ResourceProvider == "MICROSOFT.NETWORK"
+| where MetricName == "CurrentCapacityUnits"
+| where TimeGenerated > ago(7d)
+| summarize 
+    cu_p50 = percentile(Average, 50),
+    cu_p95 = percentile(Average, 95),
+    cu_max = max(Maximum)
+  by Resource, bin(TimeGenerated, 1h)
+| order by TimeGenerated desc
+| render timechart
