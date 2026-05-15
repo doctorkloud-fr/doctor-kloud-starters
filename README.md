@@ -1,57 +1,96 @@
-#Doctor Kloud Starters
+# Doctor Kloud — Starter Kits
 
-Starters opinionated pour démarrer vite et démarrer proprement. Un starter n’est pas une démo. C’est une base de départ structurée, avec des choix assumés et des points d’extension explicites.
+> **Production-ready starters** pour chaque guide Doctor Kloud.
+> Testés en lab réel, corrigés par rapport à la spec, prêts à déployer.
 
-## What you will find here
+[![GitHub Stars](https://img.shields.io/github/stars/doctorkloud-fr/doctor-kloud-starterkits?style=flat-square)](https://github.com/doctorkloud-fr/doctor-kloud-starterkits/stargazers)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+[![Azure](https://img.shields.io/badge/Azure-IaC-0078D4?style=flat-square&logo=microsoftazure)](https://azure.microsoft.com)
+[![Doctor Kloud](https://img.shields.io/badge/Doctor%20Kloud-guides-black?style=flat-square)](https://doctorkloud.fr)
 
-- des bases projet prêtes à cloner,
-- une structure stable (infra, ops, docs),
-- des safe defaults et des conventions cohérentes,
-- une section "Customization" qui dit quoi adapter et où.
+---
 
-## When to use
+##  Ce repo
 
-Utilise un starter si tu veux :
-- bootstrap un projet avec une baseline claire,
-- éviter de redécider les mêmes conventions à chaque nouveau repo,
-- converger vers une structure standard pour une équipe.
+Chaque guide Doctor Kloud donne naissance à un starter kit :
+du code testé en lab réel, avec les bugs de la spec corrigés
+et les workarounds documentés.
 
-## When NOT to use
+Pas du code théorique — du code qui a tourné sur un vrai tenant Azure.
 
-N’utilise pas un starter si tu cherches :
-- un lab guidé pas à pas,
-- une démo courte orientée pédagogie,
-- un exemple minimaliste en un fichier.
+---
 
-Dans ce cas, va vers `azure-doctor-labs`.
+##  Starter Kits disponibles
 
-## Starters catalog
+| Guide | Contenu | Chapitres couverts | Status |
+|-------|---------|-------------------|--------|
+| [🔵 Azure Application Gateway](./Azure%20Application%20Gateway/) | Bicep · KQL · Tests · Scripts PS | Ch.4 → Ch.19 + Annexes | ✅ Disponible |
+| 🟡 Azure Front Door | Bicep · WAF · DR | — | 🔜 Bientôt |
+| 🟡 Azure Firewall | Bicep · Rules · Monitoring | — | 🔜 Bientôt |
+| 🟡 AKS + AGIC | Bicep · Ingress · WAF | — | 🔜 Bientôt |
 
-| Starter | Purpose | Stack | Status |
-| --- | --- | --- | --- |
-| `entra-conditional-access-automation/` | Automatiser la création de policies CA (MFA, roles, baselines) | PowerShell, Microsoft Graph | Planned |
-| `landing-zone-baseline/` | Baseline de gouvernance et structure (naming, tags, policy, RBAC) | Bicep ou Terraform | Planned |
-| `observability-baseline/` | Baseline logs, alerts et dashboards | KQL, Azure Monitor | Planned |
+---
 
-Les starters arrivent progressivement. Le premier objectif est d’en publier peu, mais impeccables.
+##  Démarrage rapide
 
-## Quality standard
+```bash
+# Cloner le repo
+git clone https://github.com/doctorkloud-fr/doctor-kloud-starterkits.git
 
-Chaque starter doit répondre à quatre questions :
-- À quoi ça sert ?
-- Quand l’utiliser et quand l’éviter ?
-- Comment l’exécuter sans surprise ?
-- Quelles sont les limites et les trade-offs ?
+# Naviguer vers le starter kit souhaité
+cd "doctor-kloud-starterkits/Azure Application Gateway/iac-network"
 
-Si ces réponses ne tiennent pas dans le README, le starter n’est pas prêt.
+# What-if avant tout déploiement (obligatoire)
+az deployment group what-if \
+  --resource-group  \
+  --template-file modules/agw/main.bicep \
+  --parameters environments/dev/lab.bicepparam
 
-## Versioning
+# Déployer
+az deployment group create \
+  --resource-group  \
+  --template-file modules/agw/main.bicep \
+  --parameters environments/dev/lab.bicepparam
+```
 
-Quand un starter devient une base réutilisée dans plusieurs contenus ou projets, nous publions des releases.
-Breaking changes annoncés dans les release notes.
+---
 
-## License
+## 📁 Structure
+doctor-kloud-starterkits/
+│
+├── Azure Application Gateway/
+│   ├── iac-network/              ← Bicep + pipeline CI/CD
+│   ├── Bibliothèque KQL/         ← 15 requêtes production-ready
+│   ├── Plan de tests T-01→T-15/  ← Suite de tests bash
+│   └── Scripts PowerShell/       ← 5 scripts audit et diagnostic
+│
+├── Azure Front Door/             ← 🔜 Bientôt
+└── Azure Firewall/               ← 🔜 Bientôt
 
-Voir `LICENSE` dans ce repo.
+---
 
+##  Bugs documentés vs spec
 
+Chaque starter kit documente les divergences entre la spec
+du guide et la réalité Azure 2026. Ces corrections sont
+intégrées directement dans le code.
+
+Exemple pour Azure Application Gateway : **90+ bugs corrigés**,
+dont des champs KQL inexistants, des commandes CLI non supportées,
+et des sous-modules Bicep non rédigés dans la spec originale.
+
+---
+
+##  Contribution
+
+Les PR sont bienvenues :
+
+- Un bug trouvé → ouvrir une **issue** avec le label `bug-spec`
+- Un fix → ouvrir une **PR** avec référence à l'issue
+- Une amélioration → discussion ouverte bienvenue
+
+---
+
+## 📖 Les guides Doctor Kloud
+
+Retrouve les guides complets sur **[doctorkloud.fr](https://doctorkloud.fr)**
