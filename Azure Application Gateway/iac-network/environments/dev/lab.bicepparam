@@ -10,8 +10,8 @@ param namingPrefix  = 'a2i'
 
 param keyVaultName    = 'kv-a2i-tls-bicep'
 param keyVaultSecretId = 'https://kv-a2i-tls-bicep.vault.azure.net/secrets/wildcard-a2itechnologies-fr'
-param logAnalyticsId  = '/subscriptions/c25bc3f7-9afc-4162-963d-0a5d0eed078c/resourceGroups/rg-a2i-agw-bicep-westeu/providers/Microsoft.OperationalInsights/workspaces/law-a2i-network-prod'
-param wafPolicyId     = '/subscriptions/c25bc3f7-9afc-4162-963d-0a5d0eed078c/resourceGroups/rg-a2i-agw-bicep-westeu/providers/Microsoft.Network/applicationGatewayWebApplicationFirewallPolicies/wafpol-a2i-web-dev'
+param logAnalyticsId  = '/subscriptions/xxxxxxx-xxxxxx-xxxxxx/resourceGroups/rg-a2i-agw-bicep-westeu/providers/Microsoft.OperationalInsights/workspaces/law-a2i-network-prod'
+param wafPolicyId     = '/subscriptions/xxxxxxx-xxxxxx-xxxxxx/resourceGroups/rg-a2i-agw-bicep-westeu/providers/Microsoft.Network/applicationGatewayWebApplicationFirewallPolicies/wafpol-a2i-web-dev'
 
 param allowedHostnames = [
   'shop.a2itechnologies.fr'
@@ -29,7 +29,7 @@ param subnetAgwAddressPrefix = '10.50.0.0/24'
 param tags = {
   Environment: 'Dev'
   Application: 'WebFrontal'
-  Owner: 'iderassi@a2itechnologies.fr'
+  Owner: 'owner@a2itechnologies.fr'
   ManagedBy: 'Bicep-IaC'
 }
 EOF
