@@ -1,0 +1,18 @@
+// Calcul du pourcentage de trafic bloqué par Rule × Hostname.
+// Au-dessus de 5%, une Rule devient suspecte de faux positif.
+let total_par_Hostname = AzureDiagnostics
+  | where ResourceProvider == "MICROSOFT.NETWORK"
+  | where Category == "ApplicationGatewayAccessLog"
+  | where TimeGenerated > ago(7d)
+  | summarize total_requests = count() by host_s;
+AzureDiagnostics
+| where ResourceProvider == "MICROSOFT.NETWORK"
+| where Category == "ApplicationGatewayFirewallLog"
+| where TimeGenerated > ago(7d)
+| where action_s == "Blocked"
+| summarize blocked_count = count() by ruleId_s, hostname_s
+| join kind=inner (total_par_host) on $left.hostname_s == $right.host_s
+| extend pct_blocked = round(100.0 * blocked_count / total_requests, 2)
+| where pct_blocked > 5
+ | project ruleId_s, hostname_s, blocked_count, total_requests, pct_blocked
+| order by pct_blocked desc
