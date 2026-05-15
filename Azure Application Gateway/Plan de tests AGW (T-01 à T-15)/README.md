@@ -40,26 +40,6 @@ bash tests/smoke/T-01-provisioning-state.sh
 for t in tests/smoke/T-0{1,2,3,4}.sh; do bash $t; done
 ```
 
----
-
-## Tests skippés en lab
-
-| ID | Raison |
-|----|--------|
-| T-10 | Azure Load Testing incompatible avec Cloud Shell MSI (Bug #70) |
-| T-12 | Front Door supprimé après captures Ch.15 |
-| T-13 | AGW DR West US 3 non créée en lab (Bug #105) |
-
----
-
-## Adaptations lab vs spec
-
-| Test | Adaptation |
-|------|------------|
-| T-03, T-05, T-06 | `--resolve HOST:PORT:IP` — DNS fictif non résolvable (Bug #139) |
-| T-04 | `backendAddressPools` en camelCase (Bug #140) |
-| T-11 | KQL uniquement — pas de script bash |
-| T-15 | Capture thumbprint avant rotation — validation manuelle 4-24h après |
 
 ---
 
