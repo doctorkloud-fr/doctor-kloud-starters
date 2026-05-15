@@ -18,10 +18,10 @@
 | T-07 | Header X-Forwarded-Proto = https | Functional | Ch.5 | — | [T-07](smoke/T-07-x-forwarded-proto.sh) |
 | T-08 | Custom probe /health = 200 | Functional | Ch.6 | P5 | [T-08](smoke/T-08-custom-probe-health.sh) |
 | T-09 | TLS 1.2 minimum imposé | Functional | Ch.9 | P10 | [T-09](smoke/T-09-tls-minimum.sh) |
-| T-10 | Tenue à 80% du pic — 10 min | Performance | Ch.10 | — | ⏭️ SKIP |
+| T-10 | Tenue à 80% du pic — 10 min | Performance | Ch.10 | — |  |
 | T-11 | Latence P95 < 500ms | Performance | Ch.10, Ch.12 | — | [T-11](smoke/T-11-latence-p95-kql.md) |
-| T-12 | Bascule Front Door < 60s | DR | Ch.15 | — | ⏭️ SKIP |
-| T-13 | Autoscale AGW DR < 10 min | DR | Ch.10, Ch.15 | — | ⏭️ SKIP |
+| T-12 | Bascule Front Door < 60s | DR | Ch.15 | — |  |
+| T-13 | Autoscale AGW DR < 10 min | DR | Ch.10, Ch.15 | — |  |
 | T-14 | WAF bloque SQL injection | Security | Ch.9 | P9 | [T-14](smoke/T-14-waf-sqli-block.sh) |
 | T-15 | Rotation certificat Key Vault | Security | Ch.11 | P13 | [T-15](smoke/T-15-cert-rotation.sh) |
 
