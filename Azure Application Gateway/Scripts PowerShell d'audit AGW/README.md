@@ -21,3 +21,18 @@
 ## Utilisation rapide
 
 ```powershell
+# Vérifier la version PowerShell
+$PSVersionTable.PSVersion  # >= 7.2 requis
+
+# Vérifier les modules Az
+Get-Module Az.Network, Az.KeyVault, Az.Monitor -ListAvailable |
+  Select-Object Name, Version
+
+# Se connecter si nécessaire
+Connect-AzAccount
+Set-AzContext -SubscriptionId "XXXXXXXXXXXXXX-XXXXXXXXX"
+```
+
+---
+
+*Auteur : Doctor Kloud — version 1.0.0 — mai 2026*
