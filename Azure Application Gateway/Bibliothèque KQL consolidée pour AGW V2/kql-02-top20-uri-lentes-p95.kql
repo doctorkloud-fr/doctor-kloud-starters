@@ -1,0 +1,17 @@
+// Top 20 des URIs les plus lentes en P95 sur les 7 derniers jours.
+// Filtre les URIs avec moins de 100 hits pour éviter le bruit
+// statistique des Endpoints peu fréquentés.
+AzureDiagnostics
+| where ResourceProvider == "MICROSOFT.NETWORK"
+| where Category == "ApplicationGatewayAccessLog"
+| where TimeGenerated > ago(7d)
+| where httpStatus_d < 500  // exclure les erreurs (latence non significative)
+| summarize 
+    nb_hits = count(),
+    P50_ms = percentile(timeTaken_d, 50),
+    P95_ms = percentile(timeTaken_d, 95),
+    P99_ms = percentile(timeTaken_d, 99)
+  by Hostname = host_s, requestUri_s
+| where nb_hits > 100
+| order by P95_ms desc
+| take 20
