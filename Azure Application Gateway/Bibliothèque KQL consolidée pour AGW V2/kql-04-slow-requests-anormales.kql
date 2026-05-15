@@ -1,0 +1,15 @@
+// Requêtes anormalement lentes (> 2 secondes) sur la dernière 
+// fenêtre de 15 minutes. À utiliser en règle d'alerte avec un 
+// seuil de 50+ occurrences.
+AzureDiagnostics
+| where ResourceProvider == "MICROSOFT.NETWORK"
+| where Category == "ApplicationGatewayAccessLog"
+| where TimeGenerated > ago(15m)
+| where timeTaken_d > 2000  // milliseconds
+| summarize 
+    nb_slow = count(),
+    P95_ms = percentile(timeTaken_d, 95),
+    sample_uris = make_set(requestUri_s, 5)
+  by Hostname = host_s, backendPoolName_s
+| where nb_slow > 50
+| order by nb_slow desc
