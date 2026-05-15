@@ -1,0 +1,11 @@
+AzureDiagnostics
+| where ResourceProvider == "MICROSOFT.NETWORK"
+| where Category == "ApplicationGatewayAccessLog"
+| where TimeGenerated > ago(30m)
+| summarize 
+    p50 = percentile(timeTaken_d, 50),
+    p95 = percentile(timeTaken_d, 95),
+    p99 = percentile(timeTaken_d, 99),
+    count_total = count()
+  by bin(TimeGenerated, 5m)
+| order by TimeGenerated desc
