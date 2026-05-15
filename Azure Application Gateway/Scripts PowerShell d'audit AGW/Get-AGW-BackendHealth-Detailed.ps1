@@ -1,3 +1,31 @@
+<#
+.SYNOPSIS
+    Diagnostic Backend détaillé d'une Application Gateway.
+
+.DESCRIPTION
+    Pour chaque Backend pool, retourne le détail des cibles, leur état
+    Healthy/Unhealthy, le code retour de la dernière probe, et le message
+    d'erreur éventuel. Export CSV optionnel.
+
+.PARAMETER ResourceGroupName
+    Resource Group contenant l'AGW.
+
+.PARAMETER AppGatewayName
+    Nom de l'AGW.
+
+.PARAMETER ExportPath
+    Chemin d'export CSV (optionnel).
+
+.EXAMPLE
+    .\Get-AGW-BackendHealth-Detailed.ps1 -ResourceGroupName "rg-client-prod-westeu" `
+                                         -AppGatewayName "agw-client-prod-westeu"
+
+.NOTES
+    Auteur       : Doctor Kloud
+    Version      : 1.0.0
+    Dernière revue : 2026-05
+#>
+
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][string]$ResourceGroupName,
