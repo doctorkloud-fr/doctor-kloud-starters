@@ -1,0 +1,16 @@
+// Géolocalisation des IPs sources des requêtes WAF Blocked sur 7 jours.
+// Utilise geo_info_from_ip_address (fonction native Log Analytics).
+AzureDiagnostics
+| where ResourceProvider == "MICROSOFT.NETWORK"
+| where Category == "ApplicationGatewayFirewallLog"
+| where TimeGenerated > ago(7d)
+| where action_s == "Blocked"
+| extend geo = geo_info_from_ip_address(clientIp_s)
+| extend country = tostring(geo.country)
+| summarize 
+    nb_blocked = count(),
+    nb_ips_uniques = dcount(clientIp_s),
+    top_Rules = make_set(ruleId_s, 5)
+  by country
+| order by nb_blocked desc
+| take 20
