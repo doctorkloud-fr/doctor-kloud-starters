@@ -1,0 +1,17 @@
+// Timeline des modifications de configuration AGW sur 30 jours.
+// En régime nominal, seul le Service Principal du pipeline IaC
+// doit apparaître comme Caller.
+AzureActivity
+| where ResourceProvider == "MICROSOFT.NETWORK"
+| where TimeGenerated > ago(30d)
+| where ActivityStatusValue == "Success"
+| where OperationNameValue contains "write" 
+     or OperationNameValue contains "delete"
+| project 
+    TimeGenerated,
+    Caller,
+    OperationNameValue,
+    ResourceGroup,
+    Resource,
+    CallerIpAddress
+| order by TimeGenerated desc
