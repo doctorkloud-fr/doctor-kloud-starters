@@ -1,0 +1,7 @@
+AzureMetrics
+| where ResourceProvider == "MICROSOFT.NETWORK"
+| where Resource == "AGW-CLIENT-DR-NORTHEU"
+| where MetricName == "CurrentCapacityUnits"
+| where TimeGenerated > ago(15m)
+| summarize CU = avg(Average) by bin(TimeGenerated, 1m)
+| order by TimeGenerated asc
