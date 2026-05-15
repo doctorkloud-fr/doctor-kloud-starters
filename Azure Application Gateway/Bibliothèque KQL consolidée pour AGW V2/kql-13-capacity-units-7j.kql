@@ -1,1 +1,23 @@
+// Comparaison du volume de trafic des 15 dernières minutes par
+// rapport à la Baseline des 7 derniers jours sur la même tranche
+// horaire. Déclenchement si écart > 3 fois la Baseline.
+let Baseline = AzureDiagnostics
+  | where ResourceProvider == "MICROSOFT.NETWORK"
+  | where Category == "ApplicationGatewayAccessLog"
+  | where TimeGenerated between (ago(7d) .. ago(15m))
+  | extend hour_of_day = hourofday(TimeGenerated)
+  | extend day_of_week = dayofweek(TimeGenerated)
+  | summarize Baseline_avg = avg(toreal(1)) by hour_of_day, day_of_week, Hostname = host_s;
+let current = AzureDiagnostics
+  | where ResourceProvider == "MICROSOFT.NETWORK"
+  | where Category == "ApplicationGatewayAccessLog"
+  | where TimeGenerated > ago(15m)
+  | summarize current_count = count() by Hostname = host_s;
+current
+| extend hour_of_day = hourofday(now())
+| extend day_of_week = dayofweek(now())
+| join kind=inner (Baseline) on Hostname, hour_of_day, day_of_week
+| extend ratio = current_count / (Baseline_avg * 900)  // 900s = 15min
+| where ratio > 3 or ratio < 0.3
+| order by ratio desc
 
