@@ -1,0 +1,15 @@
+// Détection de bursts de 502 (>20 erreurs sur 5 minutes pour un 
+// même Backend pool). Seuil ajustable selon la volumétrie nominale 
+// du contexte.
+AzureDiagnostics
+| where ResourceProvider == "MICROSOFT.NETWORK"
+| where Category == "ApplicationGatewayAccessLog"
+| where TimeGenerated > ago(5m)
+| where httpStatus_d == 502
+| summarize 
+    nb_502 = count(),
+    nb_clients_distincts = dcount(clientIP_s),
+    sample_uris = make_set(requestUri_s, 5)
+  by Hostname = host_s, backendPoolName_s
+| where nb_502 > 20
+| order by nb_502 desc
