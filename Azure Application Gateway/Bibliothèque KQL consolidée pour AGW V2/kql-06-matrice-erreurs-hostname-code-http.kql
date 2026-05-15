@@ -1,14 +1,16 @@
-// Volumétrie des erreurs 5xx par Backend pool sur les 24 dernières
-// heures, avec détail des codes HTTP les plus fréquents.
+// Matrice 2D Hostname × code HTTP pour distinguer rapidement les
+// patterns d'erreur : isolés sur un Hostname (problème app) vs
+// transverses (problème AGW ou réseau).
 AzureDiagnostics
 | where ResourceProvider == "MICROSOFT.NETWORK"
 | where Category == "ApplicationGatewayAccessLog"
 | where TimeGenerated > ago(24h)
-| where httpStatus_d >= 500
-| summarize 
-    nb_errors = count(),
-    top_codes = make_bag(bag_pack(tostring(toint(httpStatus_d)), 1), 10),
-    sample_uris = make_set(requestUri_s, 3)
-  by Hostname = host_s, backendPoolName_s
-| order by nb_errors desc
-| take 20
+| where httpStatus_d >= 400
+| extend code_class = case(
+    httpStatus_d < 500, "4xx",
+    httpStatus_d == 502, "502",
+    httpStatus_d == 503, "503",
+    httpStatus_d == 504, "504",
+    "5xx_other")
+| summarize nb = count() by Hostname = host_s, code_class
+| evaluate pivot(code_class, sum(nb))
