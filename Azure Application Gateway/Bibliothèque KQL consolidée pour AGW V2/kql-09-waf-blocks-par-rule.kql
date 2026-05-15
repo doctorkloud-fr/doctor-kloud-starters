@@ -1,0 +1,14 @@
+// Top 30 des Rules WAF déclenchées sur les dernières 24h, séparant
+// les actions Blocked (Prevention) et Matched only (Detection).
+AzureDiagnostics
+| where ResourceProvider == "MICROSOFT.NETWORK"
+| where Category == "ApplicationGatewayFirewallLog"
+| where TimeGenerated > ago(24h)
+| summarize 
+    nb_blocked = countif(action_s == "Blocked"),
+    nb_matched_only = countif(action_s == "Matched"),
+    top_Hostnames = make_set(hostname_s, 5),
+    top_client_ips = make_set(clientIp_s, 5)
+  by ruleId_s, ruleSetType_s
+| order by nb_blocked desc
+| take 30
