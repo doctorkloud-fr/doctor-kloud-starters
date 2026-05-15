@@ -1,0 +1,14 @@
+// Vue agrégée de la latence par couple Hostname × Backend pool.
+// Permet d'identifier les pools sous-dimensionnés ou les apps mal
+// optimisées sur une AGW Multi-site s.
+AzureDiagnostics
+| where ResourceProvider == "MICROSOFT.NETWORK"
+| where Category == "ApplicationGatewayAccessLog"
+| where TimeGenerated > ago(24h)
+| summarize 
+    nb_requests = count(),
+    P50_total_ms = percentile(timeTaken_d, 50),
+    P95_total_ms = percentile(timeTaken_d, 95),
+    P95_Backend_ms = percentile(todouble(WAFEvaluationTime_s), 50)
+    by Hostname = host_s, BackendPoolName_s
+| order by P95_total_ms desc
