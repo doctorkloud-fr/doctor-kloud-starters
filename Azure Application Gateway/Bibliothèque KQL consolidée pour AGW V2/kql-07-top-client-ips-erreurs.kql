@@ -1,0 +1,18 @@
+// IPs clientes avec le plus fort taux d'erreurs sur 7 jours.
+// Combinaison utile : volume d'erreurs + diversité d'URIs ciblées
+// (signal de scan/fuzzing).
+AzureDiagnostics
+| where ResourceProvider == "MICROSOFT.NETWORK"
+| where Category == "ApplicationGatewayAccessLog"
+| where TimeGenerated > ago(7d)
+| where httpStatus_d >= 400
+| summarize 
+    nb_errors = count(),
+    nb_uris_distinctes = dcount(requestUri_s),
+    nb_4xx = countif(httpStatus_d < 500),
+    nb_5xx = countif(httpStatus_d >= 500),
+    user_agents = make_set(userAgent_s, 5)
+  by clientIP_s
+| where nb_errors > 100
+| order by nb_errors desc
+| take 30
